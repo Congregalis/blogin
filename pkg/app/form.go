@@ -1,13 +1,12 @@
 package app
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/Congregalis/gin-demo/pkg/e"
 	"github.com/Congregalis/gin-demo/pkg/logging"
-	"github.com/astaxie/beego/validation"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 )
 
 func BindAndValid(c *gin.Context, form interface{}) (int, int) {
@@ -16,17 +15,13 @@ func BindAndValid(c *gin.Context, form interface{}) (int, int) {
 		return http.StatusBadRequest, e.INVALID_PARAMS
 	}
 
-	valid := validation.Validation{}
-	check, err := valid.Valid(form)
+	validate := validator.New()
+	err = validate.Struct(form)
 	if err != nil {
-		return http.StatusInternalServerError, e.ERROR
-	}
-
-	if !check {
-		for _, e := range valid.Errors {
-			fmt.Println(e.Key, e.Value)
-			logging.Info(e.Key, e.Message)
+		for _, err := range err.(validator.ValidationErrors) {
+			logging.Info(err.Error())
 		}
+
 		return http.StatusBadRequest, e.INVALID_PARAMS
 	}
 

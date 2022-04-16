@@ -9,24 +9,26 @@ import (
 	"github.com/Congregalis/gin-demo/pkg/setting"
 	"github.com/Congregalis/gin-demo/pkg/util"
 	"github.com/Congregalis/gin-demo/service/tag_service"
-	"github.com/astaxie/beego/validation"
 	"github.com/gin-gonic/gin"
 	"github.com/unknwon/com"
 )
 
+type GetTagsForm struct {
+	State int `form:"state" validate:"eq=0|eq=1"`
+}
+
 func GetTags(c *gin.Context) {
 	appG := app.Gin{C: c}
-	valid := validation.Validation{}
+	form := GetTagsForm{}
 
-	state := -1
-	if arg := c.Query("state"); arg != "" {
-		state = com.StrTo(arg).MustInt()
-
-		valid.Range(state, 0, 1, "state")
+	httpCode, errCode := app.BindAndValid(c, &form)
+	if errCode != e.SUCCESS {
+		appG.Reposonse(httpCode, errCode, nil)
+		return
 	}
 
 	tagService := tag_service.Tag{
-		State:      state,
+		State:      form.State,
 		PageOffset: util.GetPageOffset(c),
 		PageSize:   setting.AppSetting.PageSize,
 	}
@@ -52,9 +54,9 @@ func GetTags(c *gin.Context) {
 }
 
 type AddTagForm struct {
-	Name      string `form:"name" valid:"Required;MaxSize(100)"`
-	CreatedBy string `form:"created_by" valid:"Required;MaxSize(100)"`
-	State     int    `form:"state" valid:"Range(0,1)"`
+	Name      string `form:"name" validate:"required,max=100"`
+	CreatedBy string `form:"created_by" validate:"required,max=100"`
+	State     int    `form:"state" validate:"eq=0|eq=1"`
 }
 
 func AddTag(c *gin.Context) {
@@ -94,10 +96,10 @@ func AddTag(c *gin.Context) {
 }
 
 type EditTagForm struct {
-	ID         int    `form:"id" valid:"Required;Min(1)"`
-	Name       string `form:"name" valid:"Required;MaxSize(100)"`
-	ModifiedBy string `form:"modified_by" valid:"Required;MaxSize(100)"`
-	State      int    `form:"state" valid:"Range(0,1)"`
+	ID         int    `form:"id" validate:"required,min=1"`
+	Name       string `form:"name" validate:"required,max=100"`
+	ModifiedBy string `form:"modified_by" validate:"required,max=100"`
+	State      int    `form:"state" validate:"eq=0|eq=1"`
 }
 
 func EditTag(c *gin.Context) {
@@ -138,19 +140,22 @@ func EditTag(c *gin.Context) {
 	appG.Reposonse(http.StatusOK, e.SUCCESS, nil)
 }
 
+type DeleteTagForm struct {
+	ID int `form:"id" validate:"required,min=1"`
+}
+
 func DeleteTag(c *gin.Context) {
 	appG := app.Gin{C: c}
-	valid := validation.Validation{}
-	id := com.StrTo(c.Param("id")).MustInt()
-	valid.Min(id, 1, "id").Message("ID必须大于0")
+	form := DeleteTagForm{ID: com.StrTo(c.Param("id")).MustInt()}
 
-	if valid.HasErrors() {
-		app.MakeErrors(valid.Errors)
-		appG.Reposonse(http.StatusOK, e.INVALID_PARAMS, nil)
+	httpCode, errCode := app.BindAndValid(c, &form)
+	if errCode != e.SUCCESS {
+		appG.Reposonse(httpCode, errCode, nil)
+		return
 	}
 
 	tagService := tag_service.Tag{
-		ID: id,
+		ID: form.ID,
 	}
 
 	exists, err := tagService.ExistById()

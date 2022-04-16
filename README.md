@@ -9,7 +9,7 @@
 |缓存|[redigo](https://github.com/gomodule/redigo)|
 |配置读取|[go-ini](https://github.com/go-ini/ini)|
 |JWT|[jwt-go](https://github.com/dgrijalva/jwt-go)|
-|参数验证|[go-playground/validator](go-playground/validator)|
+|参数验证|[go-playground/validator](https://github.com/go-playground/validator)|
 
 ## 项目结构
 
